@@ -1,120 +1,74 @@
 /* global h, mjukna */
 const byId = document.getElementById.bind(document);
+const qS = document.querySelector.bind(document);
+const qSA = document.querySelectorAll.bind(document);
 
-function waitForEvent(element, event) {
-  return new Promise(resolve => {
-    element.addEventListener(event, resolve, { once: true });
+const logo = byId("logo");
+const nav = qS("nav");
+const content = byId("content");
+
+let activeSection = null;
+
+async function changeSection(section) {
+  const sectionContent = qS("#content .section-content");
+  const contentRemoval = mjukna([logo, sectionContent, nav, qS("h1")]);
+  sectionContent.remove();
+  await contentRemoval;
+
+  const currentNavItem = byId(activeSection);
+  const newNavItem = byId(section);
+  const otherItems = Array.from(qSA("nav a")).filter(
+    item => ![currentNavItem, newNavItem].includes(item)
+  );
+
+  const animation = mjukna([
+    ...otherItems,
+    { anchor: qS("h1 span"), element: () => currentNavItem },
+    { anchor: newNavItem, element: () => qS("h1 span") },
+    logo
+  ]);
+  qS("h1 span").textContent = section;
+
+  currentNavItem.parentNode.classList.remove("hidden");
+  newNavItem.parentNode.classList.add("hidden");
+  activeSection = section;
+  return animation;
+}
+
+async function animateMenu(section) {
+  if (activeSection) {
+    return changeSection(section);
+  }
+
+  const navItem = byId(section);
+
+  const animation = mjukna([
+    { anchor: navItem, element: () => qS("h1 span") },
+    ...Array.from(qSA("nav a")),
+    logo
+  ]);
+
+  logo.classList.add("logo--small");
+  navItem.parentNode.classList.add("hidden");
+  content.insertBefore(h.h1({}, h.span({}, section)), nav);
+  activeSection = section;
+  return animation;
+}
+
+async function selectSection(section) {
+  await animateMenu(section);
+  const sectionContent = byId(`${section}-section`).querySelector("div");
+  const nav = qS("nav");
+  mjukna([logo, nav, qS("h1")]);
+  nav.parentNode.insertBefore(sectionContent.cloneNode(true), nav);
+}
+
+function setupListeners() {
+  qS("nav").addEventListener("click", event => {
+    if (event.target.tagName === "A") {
+      selectSection(event.target.textContent.toLowerCase());
+    }
   });
 }
 
-function selectMenu() {
-  // const details = h.div({ class: "details" });
-  // mjukna(
-  //   { anchor: this.querySelector(".underline"), element: () => details },
-  //   { spring: { stiffness: 1 } }
-  // );
-  // document.body.appendChild(details);
-}
-
-function selectSection(sectionName) {
-  content.innerHTML = "";
-  const section = h.div({}, [
-    createLogo(),
-    h.h2({ class: "section-header" }, h.span({}, sectionName)),
-    createMenu({ omittedSection: sectionName })
-  ]);
-
-  mjukna(document.querySelectorAll("nav li span"));
-
-  content.appendChild(section);
-}
-
-function createMenu({ omittedSection } = {}) {
-  const sections = Array.from(document.querySelectorAll("article section"));
-  return h.nav(
-    {},
-    h.ul(
-      {},
-      sections
-        .map(section => {
-          return section.querySelector("h2").textContent;
-        })
-        .filter(sectionName => sectionName !== omittedSection)
-        .map(sectionName =>
-          h.li(
-            {},
-            h.a(
-              {
-                href: "#",
-                onClick: () => {
-                  selectSection(sectionName);
-                }
-              },
-              [h.span({}, sectionName)]
-            )
-          )
-        )
-    )
-  );
-}
-
-function injectMenu() {
-  const menu = createMenu();
-  content.appendChild(menu);
-}
-
-function introAnimation() {
-  content.innerHTML = "";
-  const circle = h.div({ class: "circle" });
-  content.appendChild(circle);
-
-  setTimeout(async () => {
-    const animation = mjukna(
-      { anchor: circle, element: () => byId("the-o") },
-      {
-        spring: {
-          stiffness: 10,
-          damping: 0.3
-        }
-      }
-    );
-
-    renderLogo();
-    await animation;
-
-    const logo = byId("logo");
-
-    const fadeAnimation = waitForEvent(
-      logo.querySelector(".logo-letter"),
-      "transitionend"
-    );
-    logo.classList.remove("hidden-letters");
-
-    await fadeAnimation;
-    mjukna(
-      { anchor: logo, element: () => byId("logo") },
-      {
-        enterFilter: element => element.tagName === "NAV"
-      }
-    );
-    injectMenu();
-  }, 100);
-}
-
-function renderLogo() {
-  content.innerHTML = "";
-  const logo = createLogo();
-  logo.classList.add("hidden-letters");
-  content.appendChild(logo);
-}
-//
-// let state = { view: "initial" };
-const content = byId("content");
-
-introAnimation();
-
-function createLogo() {
-  const template = byId("logo-tpl");
-
-  return template.querySelector("svg").cloneNode(true);
-}
+setupListeners();
