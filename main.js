@@ -7,16 +7,31 @@ const logo = byId("logo");
 const nav = qS("nav");
 const content = byId("content");
 
+const slowSpring = {
+  stiffness: 8
+};
+
 let activeSection = null;
 
 async function changeSection(section) {
-  const sectionContent = qS("#content .section-content");
-  const contentRemoval = mjukna([logo, sectionContent, nav, qS("h1")]);
+  const sectionContent = qS(".content-wrapper .section-content");
+  const contentRemoval = mjukna(
+    [
+      logo,
+      // sectionContent,
+      nav,
+      qS("h1"),
+      qS(".content-wrapper")
+    ],
+    {
+      spring: { stiffness: 50, damping: 1.1 }
+    }
+  );
   sectionContent.remove();
   await contentRemoval;
 
-  const currentNavItem = byId(activeSection);
-  const newNavItem = byId(section);
+  const currentNavItem = byId(`${activeSection}-nav`);
+  const newNavItem = byId(`${section}-nav`);
   const otherItems = Array.from(qSA("nav a")).filter(
     item => ![currentNavItem, newNavItem].includes(item)
   );
@@ -24,7 +39,15 @@ async function changeSection(section) {
   const animation = mjukna([
     ...otherItems,
     { anchor: qS("h1 span"), element: () => currentNavItem },
+    {
+      anchor: qS(".content-wrapper"),
+      element: () => currentNavItem.parentNode.querySelector("hr")
+    },
     { anchor: newNavItem, element: () => qS("h1 span") },
+    {
+      anchor: newNavItem.parentNode.querySelector("hr"),
+      element: () => qS(".content-wrapper")
+    },
     logo
   ]);
   qS("h1 span").textContent = section;
@@ -40,17 +63,24 @@ async function animateMenu(section) {
     return changeSection(section);
   }
 
-  const navItem = byId(section);
+  const navItem = byId(`${section}-nav`);
 
   const animation = mjukna([
     { anchor: navItem, element: () => qS("h1 span") },
-    ...Array.from(qSA("nav a")),
+    {
+      anchor: navItem.parentNode.querySelector("hr"),
+      element: () => qS(".content-wrapper")
+    },
+    // ...Array.from(qSA("nav li")),
+    nav,
     logo
   ]);
 
   logo.classList.add("logo--small");
   navItem.parentNode.classList.add("hidden");
-  content.insertBefore(h.h1({}, h.span({}, section)), nav);
+  content.append(
+    h.div({ class: "content-wrapper" }, h.h1({}, h.span({}, section)))
+  );
   activeSection = section;
   return animation;
 }
@@ -59,14 +89,35 @@ async function selectSection(section) {
   await animateMenu(section);
   const sectionContent = byId(`${section}-section`).querySelector("div");
   const nav = qS("nav");
-  mjukna([logo, nav, qS("h1")]);
-  nav.parentNode.insertBefore(sectionContent.cloneNode(true), nav);
+  mjukna([logo, nav, qS("h1"), qS(".content-wrapper")]);
+  qS(".content-wrapper").appendChild(sectionContent.cloneNode(true));
 }
 
 function setupListeners() {
   qS("nav").addEventListener("click", event => {
     if (event.target.tagName === "A") {
       selectSection(event.target.textContent.toLowerCase());
+    }
+  });
+  byId("logo-link").addEventListener("click", () => {
+    if (activeSection) {
+      const navItem = byId(`${activeSection}-nav`);
+
+      const animation = mjukna([
+        { element: () => navItem, anchor: qS("h1 span") },
+        {
+          element: () => navItem.parentNode.querySelector("hr"),
+          anchor: qS(".content-wrapper")
+        },
+        nav,
+        logo
+      ]);
+
+      logo.classList.remove("logo--small");
+      navItem.parentNode.classList.remove("hidden");
+      qS(".content-wrapper").remove();
+      activeSection = null;
+      return animation;
     }
   });
 }
