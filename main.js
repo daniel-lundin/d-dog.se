@@ -15,18 +15,13 @@ let activeSection = null;
 
 async function changeSection(section) {
   const sectionContent = qS(".content-wrapper .section-content");
-  const contentRemoval = mjukna(
-    [
-      logo,
-      // sectionContent,
-      nav,
-      qS("h1"),
-      qS(".content-wrapper")
-    ],
-    {
-      spring: { stiffness: 50, damping: 1.1 }
-    }
-  );
+  const contentRemoval = mjukna([
+    logo,
+    // sectionContent,
+    nav,
+    qS("h1"),
+    qS(".content-wrapper")
+  ]);
   sectionContent.remove();
   await contentRemoval;
 
@@ -40,13 +35,13 @@ async function changeSection(section) {
     ...otherItems,
     { anchor: qS("h1 span"), element: () => currentNavItem },
     {
-      anchor: qS(".content-wrapper"),
+      anchor: qS(".content-wrapper hr"),
       element: () => currentNavItem.parentNode.querySelector("hr")
     },
     { anchor: newNavItem, element: () => qS("h1 span") },
     {
       anchor: newNavItem.parentNode.querySelector("hr"),
-      element: () => qS(".content-wrapper")
+      element: () => qS(".content-wrapper hr")
     },
     logo
   ]);
@@ -69,9 +64,8 @@ async function animateMenu(section) {
     { anchor: navItem, element: () => qS("h1 span") },
     {
       anchor: navItem.parentNode.querySelector("hr"),
-      element: () => qS(".content-wrapper")
+      element: () => qS(".content-wrapper hr")
     },
-    // ...Array.from(qSA("nav li")),
     nav,
     logo
   ]);
@@ -79,7 +73,10 @@ async function animateMenu(section) {
   logo.classList.add("logo--small");
   navItem.parentNode.classList.add("hidden");
   content.append(
-    h.div({ class: "content-wrapper" }, h.h1({}, h.span({}, section)))
+    h.div({ class: "content-wrapper" }, [
+      h.hr({}),
+      h.h1({}, h.span({}, section))
+    ])
   );
   activeSection = section;
   return animation;
@@ -89,7 +86,9 @@ async function selectSection(section) {
   await animateMenu(section);
   const sectionContent = byId(`${section}-section`).querySelector("div");
   const nav = qS("nav");
-  mjukna([logo, nav, qS("h1"), qS(".content-wrapper")]);
+  mjukna([logo, nav, qS(".content-wrapper hr"), qS("h1")], {
+    enterFilter: element => element.classList.contains("section-content")
+  });
   qS(".content-wrapper").appendChild(sectionContent.cloneNode(true));
 }
 
@@ -107,7 +106,7 @@ function setupListeners() {
         { element: () => navItem, anchor: qS("h1 span") },
         {
           element: () => navItem.parentNode.querySelector("hr"),
-          anchor: qS(".content-wrapper")
+          anchor: qS(".content-wrapper hr")
         },
         nav,
         logo

@@ -11,6 +11,7 @@
   --bg-color: #8fa57e;
   --fg-color: #0d0d0d;
   --box-color: #ececec;
+  --border-width: 5px;
 }
 
 * {
@@ -24,22 +25,26 @@ body, html {
   background-color: var(--bg-color);
 }
 
+body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
 span {
   display: inline-block;
+}
+
+a {
+  color: var(--fg-color);
 }
 
 h1 {
   font-size: 60px;
   text-transform: uppercase;
   text-align: left;
-}
-
-body {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-
+  position: relative;
 }
 
 .logo {
@@ -52,19 +57,32 @@ body {
 
 #content {
   max-width: 640px;
-  padding: 0 20px;
   width: 100%;
+  padding: 0 20px;
   margin: 0 auto;
 }
 
 .content-wrapper {
-  background: var(--box-color);
   padding: 10px;
   margin: 50px 0;
+  position: relative;
 }
+
+.content-wrapper hr {
+  position: absolute;
+  left: -5px;
+  bottom: 0px;
+  top: 0px;
+  width: var(--border-width);
+  background: #9e3737;
+  border: none;
+}
+
+
 .section-content {
   font-size: 22px;
 }
+
 
 article {
   display: none;
@@ -87,8 +105,8 @@ nav ul li a {
 }
 
 nav ul li hr {
-  height: 5px;
-  background: var(--box-color);
+  height: var(--border-width);
+  background: #9e3737;
   border: none;
 }
 
@@ -96,10 +114,21 @@ nav ul li hr {
   visibility: hidden;
 }
 
-@media screen and (max-width: 640px) {
+@media screen and (max-width: 480px) {
   #content {
-    padding: 0;
+    padding: 0 10px;
+    margin: 0;
+    width: auto;
   }
+
+  h1 {
+    font-size: 36px;
+  }
+
+  .section-content {
+    font-size: 18px;
+  }
+
   nav ul li a {
     display: inline-block;
     font-size: 24px;
